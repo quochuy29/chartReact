@@ -125,20 +125,6 @@ const ProductionPlanning = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {factories.length > 0 && (
-                <Select value={selectedFactory} onValueChange={setSelectedFactory}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="工場を選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {factories.map((factory) => (
-                      <SelectItem key={factory.id} value={factory.id}>
-                        {factory.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
             </div>
           </CardHeader>
           <CardContent>

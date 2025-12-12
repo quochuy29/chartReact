@@ -24,13 +24,20 @@ type PeriodType = "day" | "week" | "month" | "year";
 
 const Dashboard = () => {
   const [searchParams] = useSearchParams();
-  const processId = searchParams.get("process");
+  const facilityId = searchParams.get("facility");
+  const utilityId = searchParams.get("utility");
+  const equipmentId = searchParams.get("equipment");
+  
+  // Determine current selection type and ID
+  const selectionType = facilityId ? 'facility' : utilityId ? 'utility' : equipmentId ? 'equipment' : null;
+  const selectionId = facilityId || utilityId || equipmentId;
   
   // Tab mode state
   const [tabMode, setTabMode] = useState<TabMode>("period");
   const [periodType, setPeriodType] = useState<PeriodType>("day");
   
   const [date, setDate] = useState<Date>(new Date());
+  const [compareDate, setCompareDate] = useState<Date | undefined>(undefined);
   const [displayUnit, setDisplayUnit] = useState("kwh");
   const [showTarget, setShowTarget] = useState(true);
   const [energyData, setEnergyData] = useState<any[]>([]);
@@ -38,24 +45,27 @@ const Dashboard = () => {
   const [axisDialogOpen, setAxisDialogOpen] = useState(false);
   const [dataTableDialogOpen, setDataTableDialogOpen] = useState(false);
   
-  // Comparison mode states
-  const [comparisonDates, setComparisonDates] = useState<{ date1: Date; date2: Date }>({
-    date1: new Date(),
-    date2: subDays(new Date(), 7),
-  });
+  // Comparison mode states (設備比較)
+  const [comparisonDate, setComparisonDate] = useState<Date>(new Date());
+  const [comparisonPeriodType, setComparisonPeriodType] = useState<PeriodType>("day");
   const [comparisonData, setComparisonData] = useState<any[]>([]);
   
-  // Shop comparison states
+  // Shop comparison states (コスト/CO2)
+  const [shopDate, setShopDate] = useState<Date>(new Date());
+  const [shopCompareDate, setShopCompareDate] = useState<Date | undefined>(undefined);
+  const [shopPeriodType, setShopPeriodType] = useState<PeriodType>("day");
+  const [shopDisplayType, setShopDisplayType] = useState<"cost" | "co2" | "cost_per_unit" | "co2_per_unit">("cost");
   const [availableProcesses, setAvailableProcesses] = useState<{ id: string; name: string }[]>([]);
   const [selectedProcesses, setSelectedProcesses] = useState<string[]>([]);
   const [shopComparisonData, setShopComparisonData] = useState<any[]>([]);
   
+  // Available equipment for comparison (level 4)
+  const [availableEquipment, setAvailableEquipment] = useState<{ id: string; name: string }[]>([]);
+  
   const [axisSettings, setAxisSettings] = useState({
-    axis1Min: "0",
-    axis1Max: "",
-    axis1Interval: "100",
-    axis2Min: "0",
-    axis2Max: "500",
+    yMin: "0",
+    yMax: "",
+    yStepSize: "",
     saveSettings: false,
   });
 
@@ -85,22 +95,23 @@ const Dashboard = () => {
   useEffect(() => {
     loadEnergyData();
     loadAvailableProcesses();
-    if (processId) {
-      loadProcessName();
+    if (selectionId) {
+      loadSelectionName();
     }
-  }, [date, processId, tabMode, periodType]);
+  }, [date, compareDate, selectionId, selectionType, tabMode, periodType]);
 
   useEffect(() => {
     if (tabMode === "comparison") {
+      loadEquipmentData();
       generateComparisonData();
     }
-  }, [comparisonDates, tabMode]);
+  }, [comparisonDate, comparisonPeriodType, tabMode]);
 
   useEffect(() => {
-    if (tabMode === "shop" && selectedProcesses.length > 0) {
+    if (tabMode === "shop") {
       generateShopComparisonData();
     }
-  }, [selectedProcesses, tabMode, date]);
+  }, [tabMode, shopDate, shopCompareDate, shopPeriodType, shopDisplayType]);
 
   const loadAvailableProcesses = async () => {
     const { data } = await supabase
@@ -111,14 +122,103 @@ const Dashboard = () => {
     if (data) setAvailableProcesses(data);
   };
 
-  const loadProcessName = async () => {
-    if (!processId) return;
-    const { data } = await supabase
-      .from("processes")
-      .select("name")
-      .eq("id", processId)
-      .single();
-    if (data) setProcessName(data.name);
+  const loadSelectionName = async () => {
+    if (!selectionId || !selectionType) {
+      setProcessName("全工程");
+      return;
+    }
+    
+    try {
+      let pathParts: string[] = [];
+      
+      if (selectionType === 'equipment') {
+        // Equipment -> Utility -> Facility -> Line
+        const { data: equip } = await supabase
+          .from("equipment")
+          .select("name, utility_id")
+          .eq("id", selectionId)
+          .maybeSingle();
+        
+        if (equip) {
+          const { data: utility } = await supabase
+            .from("utilities")
+            .select("name, facility_id")
+            .eq("id", equip.utility_id)
+            .maybeSingle();
+          
+          if (utility) {
+            const { data: facility } = await supabase
+              .from("facilities")
+              .select("name, line_id")
+              .eq("id", utility.facility_id)
+              .maybeSingle();
+            
+            if (facility) {
+              const { data: line } = await supabase
+                .from("lines")
+                .select("name")
+                .eq("id", facility.line_id)
+                .maybeSingle();
+              
+              if (line) pathParts.push(line.name);
+              pathParts.push(facility.name);
+            }
+            pathParts.push(utility.name);
+          }
+          pathParts.push(equip.name);
+        }
+      } else if (selectionType === 'utility') {
+        // Utility -> Facility -> Line
+        const { data: utility } = await supabase
+          .from("utilities")
+          .select("name, facility_id")
+          .eq("id", selectionId)
+          .maybeSingle();
+        
+        if (utility) {
+          const { data: facility } = await supabase
+            .from("facilities")
+            .select("name, line_id")
+            .eq("id", utility.facility_id)
+            .maybeSingle();
+          
+          if (facility) {
+            const { data: line } = await supabase
+              .from("lines")
+              .select("name")
+              .eq("id", facility.line_id)
+              .maybeSingle();
+            
+            if (line) pathParts.push(line.name);
+            pathParts.push(facility.name);
+          }
+          pathParts.push(utility.name);
+        }
+      } else if (selectionType === 'facility') {
+        // Facility -> Line
+        const { data: facility } = await supabase
+          .from("facilities")
+          .select("name, line_id")
+          .eq("id", selectionId)
+          .maybeSingle();
+        
+        if (facility) {
+          const { data: line } = await supabase
+            .from("lines")
+            .select("name")
+            .eq("id", facility.line_id)
+            .maybeSingle();
+          
+          if (line) pathParts.push(line.name);
+          pathParts.push(facility.name);
+        }
+      }
+      
+      setProcessName(pathParts.length > 0 ? pathParts.join("_") : "全工程");
+    } catch (error) {
+      console.error("Error loading selection path:", error);
+      setProcessName("全工程");
+    }
   };
 
   const loadEnergyData = async () => {
@@ -130,6 +230,7 @@ const Dashboard = () => {
           time: hour < 24 ? `${String(hour).padStart(2, "0")}:00` : `${String(hour).padStart(2, "0")}:00`,
           fullDate: `${format(date, "yyyy/MM/dd")} ${hour < 24 ? String(hour).padStart(2, "0") : String(hour).padStart(2, "0")}:00`,
           actual: Math.random() * 50 + 30,
+          compareActual: compareDate ? Math.random() * 50 + 25 : undefined,
           target: 45,
         }));
         setEnergyData(sampleData);
@@ -144,6 +245,7 @@ const Dashboard = () => {
               time: `${format(day, "MM/dd")} ${String(hour).padStart(2, "0")}:00`,
               fullDate: `${format(day, "yyyy/MM/dd")} ${String(hour).padStart(2, "0")}:00`,
               actual: Math.random() * 50 + 30,
+              compareActual: compareDate ? Math.random() * 50 + 25 : undefined,
               target: 45,
             });
           }
@@ -155,6 +257,7 @@ const Dashboard = () => {
           time: `${i + 1}`,
           fullDate: `${format(date, "yyyy/MM")}/${String(i + 1).padStart(2, "0")}`,
           actual: Math.random() * 200 + 100,
+          compareActual: compareDate ? Math.random() * 200 + 80 : undefined,
           target: 150,
         }));
         setEnergyData(sampleData);
@@ -164,6 +267,7 @@ const Dashboard = () => {
           time: `${i + 1}月`,
           fullDate: `${date.getFullYear()}年${i + 1}月`,
           actual: Math.random() * 500 + 300,
+          compareActual: compareDate ? Math.random() * 500 + 250 : undefined,
           target: 450,
         }));
         setEnergyData(sampleData);
@@ -171,27 +275,68 @@ const Dashboard = () => {
     }
   };
 
+  const loadEquipmentData = async () => {
+    const { data } = await supabase
+      .from("equipment")
+      .select("id, name")
+      .eq("is_visible", true)
+      .order("display_order");
+    if (data) setAvailableEquipment(data);
+  };
+
   const generateComparisonData = () => {
-    // Generate 24h comparison data (05:00 - 29:00)
-    const hours = Array.from({ length: 25 }, (_, i) => i + 5);
-    const data = hours.map((hour) => ({
-      time: hour < 24 ? `${String(hour).padStart(2, "0")}:00` : `${String(hour).padStart(2, "0")}:00`,
-      date1Value: Math.random() * 50 + 30,
-      date2Value: Math.random() * 50 + 25,
-      target: 45,
+    // Generate equipment comparison data for bar chart
+    const equipmentNames = availableEquipment.length > 0 
+      ? availableEquipment.map(e => e.name)
+      : ["設備1", "設備2", "設備3", "設備4", "設備5"];
+    
+    const data = equipmentNames.map((name) => ({
+      name,
+      value: Math.random() * 100 + 50,
+      target: 80,
     }));
     setComparisonData(data);
   };
 
   const generateShopComparisonData = () => {
-    const data = selectedProcesses.map((processId) => {
-      const process = availableProcesses.find(p => p.id === processId);
-      return {
-        name: process?.name || "",
+    // Generate time-series data based on shopPeriodType
+    let data: any[] = [];
+    if (shopPeriodType === "day") {
+      // Generate 24h data
+      const hours = Array.from({ length: 24 }, (_, i) => i);
+      data = hours.map((hour) => ({
+        time: `${String(hour).padStart(2, "0")}:00`,
         value: Math.random() * 100 + 50,
+        compareValue: shopCompareDate ? Math.random() * 100 + 40 : undefined,
         target: 80,
-      };
-    });
+      }));
+    } else if (shopPeriodType === "week") {
+      // Generate 7 days data
+      const weekStart = startOfWeek(shopDate, { locale: ja });
+      const days = eachDayOfInterval({ start: weekStart, end: endOfWeek(shopDate, { locale: ja }) });
+      data = days.map((day) => ({
+        time: format(day, "MM/dd"),
+        value: Math.random() * 500 + 200,
+        compareValue: shopCompareDate ? Math.random() * 500 + 150 : undefined,
+        target: 400,
+      }));
+    } else if (shopPeriodType === "month") {
+      // Generate 31 days data
+      data = Array.from({ length: 31 }, (_, i) => ({
+        time: `${i + 1}日`,
+        value: Math.random() * 200 + 100,
+        compareValue: shopCompareDate ? Math.random() * 200 + 80 : undefined,
+        target: 150,
+      }));
+    } else {
+      // Generate 12 months data
+      data = Array.from({ length: 12 }, (_, i) => ({
+        time: `${i + 1}月`,
+        value: Math.random() * 1000 + 500,
+        compareValue: shopCompareDate ? Math.random() * 1000 + 400 : undefined,
+        target: 800,
+      }));
+    }
     setShopComparisonData(data);
   };
 
@@ -210,6 +355,10 @@ const Dashboard = () => {
   };
 
   const getUnitLabel = () => {
+    if (tabMode === "shop") {
+      if (shopDisplayType === "cost" || shopDisplayType === "cost_per_unit") return "円";
+      return "kg(CO2)";
+    }
     if (displayUnit === "kwh") return "kWh/m3";
     if (displayUnit === "cost") return "コスト (円)";
     return "CO2 (kg)";
@@ -225,14 +374,22 @@ const Dashboard = () => {
   const getChartTitle = () => {
     switch (tabMode) {
       case "period":
-        if (periodType === "day") return `期報 (日): ${format(date, "yyyy/MM/dd")} (05:00 - 29:00)`;
+        if (periodType === "day") {
+          if (compareDate) {
+            return `期報 (日): ${format(date, "yyyy/MM/dd")} vs ${format(compareDate, "yyyy/MM/dd")}`;
+          }
+          return `期報 (日): ${format(date, "yyyy/MM/dd")} (05:00 - 29:00)`;
+        }
         if (periodType === "week") return `期報 (週別)`;
         if (periodType === "month") return `期報 (月別)`;
         return `期報 (年別)`;
       case "comparison":
-        return `比較: ${format(comparisonDates.date1, "MM/dd")} vs ${format(comparisonDates.date2, "MM/dd")}`;
+        return `設備比較 (${format(comparisonDate, "yyyy/MM/dd")})`;
       case "shop":
-        return "Shop比較";
+        if (shopDisplayType === "cost") return "コスト";
+        if (shopDisplayType === "co2") return "CO2排出量";
+        if (shopDisplayType === "cost_per_unit") return "台当たりコスト";
+        return "台当たりCO2排出量";
     }
   };
 
@@ -253,7 +410,7 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">ダッシュボード</h1>
+            <h1 className="text-3xl font-bold">グラフ表示</h1>
             <p className="text-muted-foreground mt-1">{processName}</p>
           </div>
         </div>
@@ -265,9 +422,9 @@ const Dashboard = () => {
               {/* Tab Mode */}
               <Tabs value={tabMode} onValueChange={(v) => setTabMode(v as TabMode)} className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="period">期報 (Period)</TabsTrigger>
-                  <TabsTrigger value="comparison">比較 (Comparison)</TabsTrigger>
-                  <TabsTrigger value="shop">Shop比較</TabsTrigger>
+                  <TabsTrigger value="period">使用量推移</TabsTrigger>
+                  <TabsTrigger value="comparison">設備比較</TabsTrigger>
+                  <TabsTrigger value="shop">コスト/CO2</TabsTrigger>
                 </TabsList>
               </Tabs>
 
@@ -307,105 +464,164 @@ const Dashboard = () => {
                         />
                       </PopoverContent>
                     </Popover>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="gap-2">
+                          <CalendarIcon className="h-4 w-4" />
+                          {compareDate 
+                            ? (periodType === "year" 
+                                ? format(compareDate, "yyyy年") 
+                                : periodType === "month" 
+                                  ? format(compareDate, "yyyy/MM") 
+                                  : periodType === "week"
+                                    ? format(compareDate, "yyyy/MM/dd週")
+                                    : format(compareDate, "yyyy/MM/dd"))
+                            : <span className="text-muted-foreground">比較期間を選択</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <div className="p-2 border-b flex justify-end">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setCompareDate(undefined)}
+                            disabled={!compareDate}
+                          >
+                            クリア
+                          </Button>
+                        </div>
+                        <Calendar
+                          mode="single"
+                          selected={compareDate}
+                          onSelect={(date) => setCompareDate(date)}
+                          locale={ja}
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 )}
 
                 {tabMode === "comparison" && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm">期間1:</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <CalendarIcon className="h-4 w-4" />
-                            {format(comparisonDates.date1, "MM/dd", { locale: ja })}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={comparisonDates.date1}
-                            onSelect={(date) => date && setComparisonDates({ ...comparisonDates, date1: date })}
-                            locale={ja}
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                  <div className="flex items-center gap-4">
+                    {/* Period Type Tabs */}
+                    <div className="flex items-center">
+                      <Tabs value={comparisonPeriodType} onValueChange={(v) => setComparisonPeriodType(v as PeriodType)}>
+                        <TabsList className="h-8">
+                          <TabsTrigger value="day" className="text-xs px-3">日</TabsTrigger>
+                          <TabsTrigger value="week" className="text-xs px-3">週</TabsTrigger>
+                          <TabsTrigger value="month" className="text-xs px-3">月</TabsTrigger>
+                          <TabsTrigger value="year" className="text-xs px-3">年</TabsTrigger>
+                        </TabsList>
+                      </Tabs>
                     </div>
-                    <span className="text-muted-foreground">vs</span>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm">期間2:</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <CalendarIcon className="h-4 w-4" />
-                            {format(comparisonDates.date2, "MM/dd", { locale: ja })}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={comparisonDates.date2}
-                            onSelect={(date) => date && setComparisonDates({ ...comparisonDates, date2: date })}
-                            locale={ja}
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="flex gap-1 ml-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setComparisonDates({
-                          date1: new Date(),
-                          date2: subDays(new Date(), 1),
-                        })}
-                      >
-                        今日vs昨日
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setComparisonDates({
-                          date1: new Date(),
-                          date2: subWeeks(new Date(), 1),
-                        })}
-                      >
-                        今日vs先週
-                      </Button>
-                    </div>
+                    
+                    {/* Date Picker */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <CalendarIcon className="h-4 w-4" />
+                          {comparisonPeriodType === "year"
+                            ? format(comparisonDate, "yyyy年")
+                            : comparisonPeriodType === "month"
+                              ? format(comparisonDate, "yyyy/MM")
+                              : comparisonPeriodType === "week"
+                                ? format(comparisonDate, "yyyy/MM/dd週")
+                                : format(comparisonDate, "yyyy/MM/dd")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={comparisonDate}
+                          onSelect={(date) => date && setComparisonDate(date)}
+                          locale={ja}
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 )}
 
                 {tabMode === "shop" && (
-                  <div className="text-sm text-muted-foreground">
-                    工程を選択してください（最大6つ）
+                  <div className="flex items-center gap-4">
+                    {/* Period Type Tabs */}
+                    <Tabs value={shopPeriodType} onValueChange={(v) => setShopPeriodType(v as PeriodType)}>
+                      <TabsList className="h-8">
+                        <TabsTrigger value="day" className="text-xs px-3">日</TabsTrigger>
+                        <TabsTrigger value="week" className="text-xs px-3">週</TabsTrigger>
+                        <TabsTrigger value="month" className="text-xs px-3">月</TabsTrigger>
+                        <TabsTrigger value="year" className="text-xs px-3">年</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                    
+                    {/* Date Picker */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <CalendarIcon className="h-4 w-4" />
+                          {shopPeriodType === "year"
+                            ? format(shopDate, "yyyy年")
+                            : shopPeriodType === "month"
+                              ? format(shopDate, "yyyy/MM")
+                              : shopPeriodType === "week"
+                                ? format(shopDate, "yyyy/MM/dd週")
+                                : format(shopDate, "yyyy/MM/dd")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={shopDate}
+                          onSelect={(date) => date && setShopDate(date)}
+                          locale={ja}
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    {/* Comparison Date Picker */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <CalendarIcon className="h-4 w-4" />
+                          {shopCompareDate 
+                            ? (shopPeriodType === "year" 
+                                ? format(shopCompareDate, "yyyy年") 
+                                : shopPeriodType === "month" 
+                                  ? format(shopCompareDate, "yyyy/MM") 
+                                  : shopPeriodType === "week"
+                                    ? format(shopCompareDate, "yyyy/MM/dd週")
+                                    : format(shopCompareDate, "yyyy/MM/dd"))
+                            : <span className="text-muted-foreground">比較期間を選択</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <div className="p-2 border-b flex justify-end">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setShopCompareDate(undefined)}
+                            disabled={!shopCompareDate}
+                          >
+                            クリア
+                          </Button>
+                        </div>
+                        <Calendar
+                          mode="single"
+                          selected={shopCompareDate}
+                          onSelect={(date) => setShopCompareDate(date)}
+                          locale={ja}
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 )}
 
                 {/* Spacer */}
                 <div className="flex-1" />
 
-                {/* Unit Toggle */}
-                <RadioGroup
-                  value={displayUnit}
-                  onValueChange={setDisplayUnit}
-                  className="flex items-center gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="kwh" id="kwh" />
-                    <Label htmlFor="kwh" className="text-sm cursor-pointer">kWh/m3</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="cost" id="cost" />
-                    <Label htmlFor="cost" className="text-sm cursor-pointer">コスト</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="co2" id="co2" />
-                    <Label htmlFor="co2" className="text-sm cursor-pointer">CO2</Label>
-                  </div>
-                </RadioGroup>
 
                 {/* Target Toggle */}
                 <div className="flex items-center space-x-2">
@@ -418,19 +634,31 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Shop Comparison Process Selection */}
+              {/* Shop Display Type Selection */}
               {tabMode === "shop" && (
-                <div className="flex flex-wrap gap-2 pt-2 border-t">
-                  {availableProcesses.map((process) => (
-                    <Button
-                      key={process.id}
-                      variant={selectedProcesses.includes(process.id) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => toggleProcessSelection(process.id)}
-                    >
-                      {process.name}
-                    </Button>
-                  ))}
+                <div className="pt-2 border-t">
+                  <RadioGroup 
+                    value={shopDisplayType} 
+                    onValueChange={(v) => setShopDisplayType(v as typeof shopDisplayType)}
+                    className="flex flex-wrap gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="cost" id="cost" />
+                      <Label htmlFor="cost" className="cursor-pointer">コスト</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="co2" id="co2" />
+                      <Label htmlFor="co2" className="cursor-pointer">CO2排出量</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="cost_per_unit" id="cost_per_unit" />
+                      <Label htmlFor="cost_per_unit" className="cursor-pointer">台当たりコスト</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="co2_per_unit" id="co2_per_unit" />
+                      <Label htmlFor="co2_per_unit" className="cursor-pointer">台当たりCO2排出量</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
               )}
             </div>
@@ -446,33 +674,11 @@ const Dashboard = () => {
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 {tabMode === "shop" ? (
-                  <BarChart data={shopComparisonData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" label={{ value: getUnitLabel(), position: "insideBottomRight", offset: -10 }} />
-                    <YAxis dataKey="name" type="category" width={100} />
-                    <Tooltip />
-                    <Legend 
-                      payload={[
-                        { value: "実績", type: "square" as const, color: "hsl(var(--chart-1))", id: "value" },
-                        ...(showTarget ? [{ value: "目標 (基準線)", type: "line" as const, color: "hsl(var(--chart-2))", id: "target", payload: { strokeDasharray: "5 5" } }] : [])
-                      ]}
-                    />
-                    <Bar dataKey="value" fill="hsl(var(--chart-1))" name="実績" />
-                    {showTarget && shopComparisonData.length > 0 && (
-                      <ReferenceLine 
-                        x={shopComparisonData[0]?.target || 80} 
-                        stroke="hsl(var(--chart-2))" 
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                      />
-                    )}
-                  </BarChart>
-                ) : tabMode === "comparison" ? (
-                  <LineChart data={comparisonData}>
+                  <LineChart data={shopComparisonData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="time" 
-                      label={{ value: "時間", position: "insideBottomRight", offset: -10 }}
+                      tick={{ fontSize: 12 }}
                     />
                     <YAxis 
                       label={{ value: getUnitLabel(), angle: -90, position: "insideLeft" }}
@@ -481,18 +687,20 @@ const Dashboard = () => {
                     <Legend />
                     <Line
                       type="monotone"
-                      dataKey="date1Value"
+                      dataKey="value"
                       stroke="hsl(var(--chart-1))"
                       strokeWidth={2}
-                      name={format(comparisonDates.date1, "yyyy/MM/dd")}
+                      name={shopCompareDate ? format(shopDate, "yyyy/MM/dd") : "実績"}
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="date2Value"
-                      stroke="hsl(var(--chart-3))"
-                      strokeWidth={2}
-                      name={format(comparisonDates.date2, "yyyy/MM/dd")}
-                    />
+                    {shopCompareDate && (
+                      <Line
+                        type="monotone"
+                        dataKey="compareValue"
+                        stroke="hsl(var(--chart-3))"
+                        strokeWidth={2}
+                        name={format(shopCompareDate, "yyyy/MM/dd")}
+                      />
+                    )}
                     {showTarget && (
                       <Line
                         type="monotone"
@@ -504,6 +712,33 @@ const Dashboard = () => {
                       />
                     )}
                   </LineChart>
+                ) : tabMode === "comparison" ? (
+                  <BarChart data={comparisonData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis 
+                      label={{ value: "kWh/m³", angle: -90, position: "insideLeft" }}
+                    />
+                    <Tooltip />
+                    <Legend 
+                      payload={[
+                        { value: "実績", type: "square" as const, color: "hsl(var(--chart-1))", id: "value" },
+                        ...(showTarget ? [{ value: "目標 (基準線)", type: "line" as const, color: "hsl(var(--chart-2))", id: "target", payload: { strokeDasharray: "5 5" } }] : [])
+                      ]}
+                    />
+                    <Bar dataKey="value" fill="hsl(var(--chart-1))" name="実績" />
+                    {showTarget && comparisonData.length > 0 && (
+                      <ReferenceLine 
+                        y={comparisonData[0]?.target || 80} 
+                        stroke="hsl(var(--chart-2))" 
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                      />
+                    )}
+                  </BarChart>
                 ) : (
                   <LineChart data={energyData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -532,8 +767,17 @@ const Dashboard = () => {
                       dataKey="actual"
                       stroke="hsl(var(--chart-1))"
                       strokeWidth={2}
-                      name="実績"
+                      name={compareDate ? format(date, "yyyy/MM/dd") : "実績"}
                     />
+                    {compareDate && (
+                      <Line
+                        type="monotone"
+                        dataKey="compareActual"
+                        stroke="hsl(var(--chart-3))"
+                        strokeWidth={2}
+                        name={format(compareDate, "yyyy/MM/dd")}
+                      />
+                    )}
                     {showTarget && (
                       <Line
                         type="monotone"
@@ -568,55 +812,34 @@ const Dashboard = () => {
             </DialogHeader>
             <div className="space-y-6 py-4">
               <div className="space-y-3">
-                <Label className="text-sm font-medium">第1軸（左 - エネルギー/コスト）:</Label>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">最小値:</Label>
-                    <Input
-                      value={axisSettings.axis1Min}
-                      onChange={(e) => setAxisSettings({ ...axisSettings, axis1Min: e.target.value })}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">最大値:</Label>
-                    <Input
-                      value={axisSettings.axis1Max}
-                      onChange={(e) => setAxisSettings({ ...axisSettings, axis1Max: e.target.value })}
-                      placeholder="自動"
-                    />
-                    <span className="text-xs text-muted-foreground">（空欄=自動）</span>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">間隔:</Label>
-                    <Input
-                      value={axisSettings.axis1Interval}
-                      onChange={(e) => setAxisSettings({ ...axisSettings, axis1Interval: e.target.value })}
-                      placeholder="100"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">第2軸（右 - 温度/その他）:</Label>
+                <Label className="text-sm font-medium">Y軸（左）設定:</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">最小値:</Label>
                     <Input
-                      value={axisSettings.axis2Min}
-                      onChange={(e) => setAxisSettings({ ...axisSettings, axis2Min: e.target.value })}
+                      value={axisSettings.yMin}
+                      onChange={(e) => setAxisSettings({ ...axisSettings, yMin: e.target.value })}
                       placeholder="0"
                     />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">最大値:</Label>
                     <Input
-                      value={axisSettings.axis2Max}
-                      onChange={(e) => setAxisSettings({ ...axisSettings, axis2Max: e.target.value })}
-                      placeholder="500"
+                      value={axisSettings.yMax}
+                      onChange={(e) => setAxisSettings({ ...axisSettings, yMax: e.target.value })}
+                      placeholder="自動"
                     />
+                    <span className="text-xs text-muted-foreground">（空欄=自動）</span>
                   </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Step Size:</Label>
+                  <Input
+                    value={axisSettings.yStepSize}
+                    onChange={(e) => setAxisSettings({ ...axisSettings, yStepSize: e.target.value })}
+                    placeholder="自動"
+                  />
+                  <span className="text-xs text-muted-foreground">（空欄=自動）</span>
                 </div>
               </div>
 
