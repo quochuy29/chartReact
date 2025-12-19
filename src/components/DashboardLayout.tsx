@@ -17,6 +17,7 @@ import {
 interface DashboardLayoutProps {
   children: ReactNode;
 }
+import toyotaKyushuLogo from "@/assets/toyota-kyushu-logo.png";
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, signOut, loading } = useAuth();
@@ -48,7 +49,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4">
             <div className="flex items-center gap-4">
               <SidebarTrigger />
-              <div className="text-sm font-medium">[LOGO]</div>
+              <img src={toyotaKyushuLogo} alt="Toyota Kyushu" className="h-12 w-auto" />
+              {/* <div className="text-sm font-medium">[LOGO]</div> */}
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

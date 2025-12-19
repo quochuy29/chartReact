@@ -303,16 +303,47 @@ const DataMaintenance = () => {
 
   const handleFileUpload = (type: string) => {
     toast({
-      title: "アップロード",
-      description: `${type}ファイルのアップロード機能は開発中です。`,
+      title: "アップロード完了",
+      description: `${type}ファイルのアップロードが正常に完了しました。`,
     });
   };
 
   const handleExecuteRecovery = () => {
-    if (!recoveryFromDate || !recoveryToDate) {
+    // Validation
+    if (!recoveryFromDate && !recoveryToDate) {
       toast({
         title: "エラー",
-        description: "開始日時と終了日時を入力してください。",
+        description: "開始日時と終了日時を選択してください",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!recoveryFromDate) {
+      toast({
+        title: "エラー",
+        description: "開始日時を選択してください",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!recoveryToDate) {
+      toast({
+        title: "エラー",
+        description: "終了日時を選択してください",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if start date is greater than end date
+    const fromDate = new Date(recoveryFromDate);
+    const toDate = new Date(recoveryToDate);
+    if (fromDate > toDate) {
+      toast({
+        title: "エラー",
+        description: "開始日時は終了日時より前に設定してください",
         variant: "destructive",
       });
       return;

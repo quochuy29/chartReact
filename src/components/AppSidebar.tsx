@@ -5,7 +5,6 @@ import { useLocation } from "react-router-dom";
 import {
   ChevronRight,
   LayoutDashboard,
-  Calendar,
   Settings as SettingsIcon,
   Users,
   Database,
@@ -56,7 +55,7 @@ interface Line {
 }
 
 const mainMenuItems = [
-  { title: "生産計画設定", url: "/production-planning", icon: Calendar },
+  { title: "ホーム", url: "/home", icon: LayoutDashboard },
   { title: "ユーザー管理", url: "/user-management", icon: Users },
   { title: "データ保守", url: "/data-maintenance", icon: Database },
 ];
