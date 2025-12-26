@@ -6,260 +6,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { Upload, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { SmartPagination } from "@/components/SmartPagination";
 
-// Mock data for CSV uploads
-const mockTagUploads = [
-  {
-    id: 1,
-    fileName: "tag_formula_2024_01.csv",
-    uploadDate: "2024-01-15 10:30:00",
-    uploader: "田中太郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 2,
-    fileName: "tag_formula_2024_02.csv",
-    uploadDate: "2024-02-10 14:20:00",
-    uploader: "山田花子",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 3,
-    fileName: "tag_formula_2024_03.csv",
-    uploadDate: "2024-03-05 09:15:00",
-    uploader: "佐藤次郎",
-    status: "failed",
-    errorFile: "tag_formula_error_20240305101930.txt",
-  },
-  {
-    id: 4,
-    fileName: "tag_formula_2024_04.csv",
-    uploadDate: "2024-04-20 16:45:00",
-    uploader: "田中太郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 5,
-    fileName: "tag_formula_2025_05.csv",
-    uploadDate: "2024-05-12 11:00:00",
-    uploader: "山田花子",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 6,
-    fileName: "tag_formula_2025_06.csv",
-    uploadDate: "2024-05-12 11:00:00",
-    uploader: "山田花子",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 7,
-    fileName: "tag_formula_2025_07.csv",
-    uploadDate: "2024-05-12 11:00:00",
-    uploader: "山田花子",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 8,
-    fileName: "tag_formula_2025_08.csv",
-    uploadDate: "2024-05-12 11:00:00",
-    uploader: "山田花子",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 9,
-    fileName: "tag_formula_2025_09.csv",
-    uploadDate: "2024-05-12 11:00:00",
-    uploader: "山田花子",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 10,
-    fileName: "tag_formula_2025_10.csv",
-    uploadDate: "2024-05-12 11:00:00",
-    uploader: "山田花子",
-    status: "success",
-    errorFile: null,
-  },
-];
+// Helper function to generate mock data
+const generateMockData = (prefix: string, count: number, type: 'tag' | 'device' | 'parameter') => {
+  const uploaders = ["田中太郎", "山田花子", "佐藤次郎", "鈴木一郎", "高橋美咲"];
+  const data = [];
+  
+  for (let i = 1; i <= count; i++) {
+    const year = 2024 + Math.floor((i - 1) / 12);
+    const month = ((i - 1) % 12) + 1;
+    const day = Math.floor(Math.random() * 28) + 1;
+    const hour = Math.floor(Math.random() * 12) + 8;
+    const minute = Math.floor(Math.random() * 60);
+    const status = Math.random() > 0.15 ? "success" : "failed";
+    const uploader = uploaders[Math.floor(Math.random() * uploaders.length)];
+    
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+    const errorFile = status === "failed" 
+      ? `${prefix}_error_${year}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}${String(hour).padStart(2, '0')}${String(minute).padStart(2, '0')}00.txt`
+      : null;
+    
+    data.push({
+      id: i,
+      fileName: `${prefix}_${year}_${String(month).padStart(2, '0')}.csv`,
+      uploadDate: dateStr,
+      uploader,
+      status,
+      errorFile,
+    });
+  }
+  
+  return data;
+};
 
-// Mock data for device management
-const mockDeviceUploads = [
-  {
-    id: 1,
-    fileName: "device_list_2024_01.csv",
-    uploadDate: "2024-01-20 09:00:00",
-    uploader: "田中太郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 2,
-    fileName: "device_list_2024_02.csv",
-    uploadDate: "2024-02-15 13:30:00",
-    uploader: "山田花子",
-    status: "failed",
-    errorFile: "device_error_20240215140000.txt",
-  },
-  {
-    id: 3,
-    fileName: "device_list_2024_03.csv",
-    uploadDate: "2024-03-10 10:45:00",
-    uploader: "佐藤次郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 4,
-    fileName: "device_list_2024_03.csv",
-    uploadDate: "2024-03-10 10:45:00",
-    uploader: "佐藤次郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 5,
-    fileName: "device_list_2024_03.csv",
-    uploadDate: "2024-03-10 10:45:00",
-    uploader: "佐藤次郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 6,
-    fileName: "device_list_2024_03.csv",
-    uploadDate: "2024-03-10 10:45:00",
-    uploader: "佐藤次郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 7,
-    fileName: "device_list_2024_03.csv",
-    uploadDate: "2024-03-10 10:45:00",
-    uploader: "佐藤次郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 8,
-    fileName: "device_list_2024_03.csv",
-    uploadDate: "2024-03-10 10:45:00",
-    uploader: "佐藤次郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 9,
-    fileName: "device_list_2024_03.csv",
-    uploadDate: "2024-03-10 10:45:00",
-    uploader: "佐藤次郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 10,
-    fileName: "device_list_2024_03.csv",
-    uploadDate: "2024-03-10 10:45:00",
-    uploader: "佐藤次郎",
-    status: "success",
-    errorFile: null,
-  },
-];
+// Mock data for CSV uploads - 50 records
+const mockTagUploads = generateMockData("tag_formula", 50, "tag");
 
-// Mock data for parameter settings uploads
-const mockParameterUploads = [
-  {
-    id: 1,
-    fileName: "parameter_2024_01.csv",
-    uploadDate: "2024-01-15 10:30:00",
-    uploader: "田中太郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 2,
-    fileName: "parameter_2024_02.csv",
-    uploadDate: "2024-02-10 14:20:00",
-    uploader: "山田花子",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 3,
-    fileName: "parameter_2024_03.csv",
-    uploadDate: "2024-03-05 09:15:00",
-    uploader: "佐藤次郎",
-    status: "failed",
-    errorFile: "parameter_error_20240305101930.txt",
-  },
-  {
-    id: 4,
-    fileName: "parameter_2024_04.csv",
-    uploadDate: "2024-04-20 16:45:00",
-    uploader: "田中太郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 5,
-    fileName: "parameter_2025_05.csv",
-    uploadDate: "2024-05-12 11:00:00",
-    uploader: "山田花子",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 6,
-    fileName: "parameter_2025_06.csv",
-    uploadDate: "2024-06-15 09:30:00",
-    uploader: "田中太郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 7,
-    fileName: "parameter_2025_07.csv",
-    uploadDate: "2024-07-20 14:00:00",
-    uploader: "山田花子",
-    status: "failed",
-    errorFile: "parameter_error_20240720143000.txt",
-  },
-  {
-    id: 8,
-    fileName: "parameter_2025_08.csv",
-    uploadDate: "2024-08-10 10:15:00",
-    uploader: "佐藤次郎",
-    status: "success",
-    errorFile: null,
-  },
-  {
-    id: 9,
-    fileName: "parameter_2025_07.csv",
-    uploadDate: "2024-07-20 14:00:00",
-    uploader: "山田花子",
-    status: "failed",
-    errorFile: "parameter_error_20240720143000.txt",
-  },
-  {
-    id: 10,
-    fileName: "parameter_2025_08.csv",
-    uploadDate: "2024-08-10 10:15:00",
-    uploader: "佐藤次郎",
-    status: "success",
-    errorFile: null,
-  },
-];
+// Mock data for device management - 50 records
+const mockDeviceUploads = generateMockData("device_list", 50, "device");
+
+// Mock data for parameter settings uploads - 50 records
+const mockParameterUploads = generateMockData("parameter", 50, "parameter");
 
 const DataMaintenance = () => {
   const { toast } = useToast();
@@ -475,28 +265,12 @@ const DataMaintenance = () => {
                   <span className="text-sm text-muted-foreground">
                     {tagStartIndex + 1} - {Math.min(tagEndIndex, mockTagUploads.length)} / {mockTagUploads.length} 件
                   </span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setTagCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      disabled={tagCurrentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      前へ
-                    </Button>
-                    <span className="text-sm">
-                      {tagCurrentPage} / {totalTagPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setTagCurrentPage((prev) => Math.min(prev + 1, totalTagPages))}
-                      disabled={tagCurrentPage === totalTagPages}
-                    >
-                      次へ
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                  <div className="flex items-center gap-1">
+                  <SmartPagination
+                    currentPage={tagCurrentPage}
+                    totalPages={totalTagPages}
+                    onPageChange={setTagCurrentPage}
+                  />
                   </div>
                 </div>
               )}
@@ -587,29 +361,11 @@ const DataMaintenance = () => {
                     {parameterStartIndex + 1} - {Math.min(parameterEndIndex, mockParameterUploads.length)} /{" "}
                     {mockParameterUploads.length} 件
                   </span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setParameterCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      disabled={parameterCurrentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      前へ
-                    </Button>
-                    <span className="text-sm">
-                      {parameterCurrentPage} / {totalParameterPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setParameterCurrentPage((prev) => Math.min(prev + 1, totalParameterPages))}
-                      disabled={parameterCurrentPage === totalParameterPages}
-                    >
-                      次へ
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <SmartPagination
+                    currentPage={parameterCurrentPage}
+                    totalPages={totalParameterPages}
+                    onPageChange={setParameterCurrentPage}
+                  />
                 </div>
               )}
             </div>
@@ -742,29 +498,11 @@ const DataMaintenance = () => {
                     {deviceStartIndex + 1} - {Math.min(deviceEndIndex, mockDeviceUploads.length)} /{" "}
                     {mockDeviceUploads.length} 件
                   </span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDeviceCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      disabled={deviceCurrentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      前へ
-                    </Button>
-                    <span className="text-sm">
-                      {deviceCurrentPage} / {totalDevicePages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDeviceCurrentPage((prev) => Math.min(prev + 1, totalDevicePages))}
-                      disabled={deviceCurrentPage === totalDevicePages}
-                    >
-                      次へ
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <SmartPagination
+                    currentPage={deviceCurrentPage}
+                    totalPages={totalDevicePages}
+                    onPageChange={setDeviceCurrentPage}
+                  />
                 </div>
               )}
             </div>

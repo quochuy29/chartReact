@@ -17,6 +17,7 @@ import {
   endOfWeek,
   startOfYear,
   endOfYear,
+  getWeek,
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
@@ -400,21 +401,43 @@ const Dashboard = () => {
         }));
         setEnergyData(sampleData);
       } else if (periodType === "week") {
-        // Generate 7 days * 24 hours = 168 data points
+        // Generate 7 days * 24 hours = 168 data points for week view
         const weekStart = startOfWeek(date, { locale: ja });
         const days = eachDayOfInterval({ start: weekStart, end: endOfWeek(date, { locale: ja }) });
+        const weekdayNames = ["日", "月", "火", "水", "木", "金", "土"];
         const sampleData: any[] = [];
-        days.forEach((day) => {
-          for (let hour = 0; hour < 24; hour++) {
-            sampleData.push({
-              time: `${format(day, "MM/dd")} ${String(hour).padStart(2, "0")}:00`,
-              fullDate: `${format(day, "yyyy/MM/dd")} ${String(hour).padStart(2, "0")}:00`,
-              actual: Math.random() * 50 + 30,
-              compareActual: compareDate ? Math.random() * 50 + 25 : undefined,
-              target: 45,
-            });
-          }
-        });
+        let dataIndex = 0;
+
+        if (compareDate) {
+          // When comparison is selected, still generate 168 points but show weekday names on X-axis
+          days.forEach((day) => {
+            const weekdayIndex = day.getDay();
+            for (let hour = 0; hour < 24; hour++) {
+              sampleData.push({
+                time: weekdayNames[weekdayIndex],
+                fullDate: `${format(day, "yyyy/MM/dd")} ${String(hour).padStart(2, "0")}:00`,
+                actual: Math.random() * 50 + 30,
+                compareActual: Math.random() * 50 + 25,
+                target: 45,
+                dataIndex: dataIndex++,
+              });
+            }
+          });
+        } else {
+          // Without comparison, show date and hourly data
+          days.forEach((day) => {
+            for (let hour = 0; hour < 24; hour++) {
+              sampleData.push({
+                time: `${format(day, "MM/dd")} ${String(hour).padStart(2, "0")}:00`,
+                fullDate: `${format(day, "yyyy/MM/dd")} ${String(hour).padStart(2, "0")}:00`,
+                actual: Math.random() * 50 + 30,
+                compareActual: undefined,
+                target: 45,
+                dataIndex: dataIndex++,
+              });
+            }
+          });
+        }
         setEnergyData(sampleData);
       } else if (periodType === "month") {
         // Generate 31 data points (31 days)
@@ -542,6 +565,12 @@ const Dashboard = () => {
           baseData.category1 = Math.random() * 50 + 30;
           baseData.category2 = Math.random() * 40 + 20;
           baseData.category3 = Math.random() * 30 + 15;
+          // Add comparison data when shopCompareDate is selected
+          if (shopCompareDate) {
+            baseData.category1_compare = Math.random() * 50 + 25;
+            baseData.category2_compare = Math.random() * 40 + 15;
+            baseData.category3_compare = Math.random() * 30 + 10;
+          }
         } else {
           // Line chart for equipment
           baseData.value = Math.random() * 200 + 100;
@@ -563,6 +592,12 @@ const Dashboard = () => {
           baseData.category1 = Math.random() * 500 + 300;
           baseData.category2 = Math.random() * 400 + 200;
           baseData.category3 = Math.random() * 300 + 150;
+          // Add comparison data when shopCompareDate is selected
+          if (shopCompareDate) {
+            baseData.category1_compare = Math.random() * 500 + 250;
+            baseData.category2_compare = Math.random() * 400 + 150;
+            baseData.category3_compare = Math.random() * 300 + 100;
+          }
         } else {
           // Line chart for equipment
           baseData.value = Math.random() * 1000 + 500;
@@ -583,6 +618,12 @@ const Dashboard = () => {
           baseData.category1 = Math.random() * 30 + 20;
           baseData.category2 = Math.random() * 25 + 15;
           baseData.category3 = Math.random() * 20 + 10;
+          // Add comparison data when shopCompareDate is selected
+          if (shopCompareDate) {
+            baseData.category1_compare = Math.random() * 30 + 15;
+            baseData.category2_compare = Math.random() * 25 + 10;
+            baseData.category3_compare = Math.random() * 20 + 5;
+          }
         } else {
           baseData.value = Math.random() * 100 + 50;
           baseData.compareValue = shopCompareDate ? Math.random() * 100 + 40 : undefined;
@@ -594,15 +635,25 @@ const Dashboard = () => {
       // week
       const weekStart = startOfWeek(shopDate, { locale: ja });
       const days = eachDayOfInterval({ start: weekStart, end: endOfWeek(shopDate, { locale: ja }) });
+      const weekdayNames = ["日", "月", "火", "水", "木", "金", "土"];
+
       data = days.map((day) => {
+        const weekdayIndex = day.getDay();
         const baseData: any = {
-          time: format(day, "MM/dd"),
+          // When comparison is selected, show weekday names; otherwise show date
+          time: shopCompareDate ? weekdayNames[weekdayIndex] : format(day, "MM/dd"),
         };
 
         if (facilityId || utilityId) {
           baseData.category1 = Math.random() * 150 + 100;
           baseData.category2 = Math.random() * 120 + 80;
           baseData.category3 = Math.random() * 100 + 60;
+          // Add comparison data when shopCompareDate is selected
+          if (shopCompareDate) {
+            baseData.category1_compare = Math.random() * 150 + 80;
+            baseData.category2_compare = Math.random() * 120 + 60;
+            baseData.category3_compare = Math.random() * 100 + 40;
+          }
         } else {
           baseData.value = Math.random() * 500 + 200;
           baseData.compareValue = shopCompareDate ? Math.random() * 500 + 150 : undefined;
@@ -673,25 +724,103 @@ const Dashboard = () => {
 
   const chartColors = ["hsl(var(--chart-1))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
+  // Helper function to format date based on shop period type
+  const formatShopDate = (dateToFormat: Date) => {
+    switch (shopPeriodType) {
+      case "year":
+        return format(dateToFormat, "yyyy");
+      case "month":
+        return format(dateToFormat, "yyyy/MM");
+      case "week":
+        return `${format(dateToFormat, "yyyy")}/${getWeek(dateToFormat)}週`;
+      default:
+        return format(dateToFormat, "yyyy/MM/dd");
+    }
+  };
+
   const getChartTitle = () => {
     switch (tabMode) {
       case "period":
         if (periodType === "day") {
           if (compareDate) {
-            return `期報 (日): ${format(date, "yyyy/MM/dd")} vs ${format(compareDate, "yyyy/MM/dd")}`;
+            return `期間（日）: ${format(date, "yyyy/MM/dd")} ~ ${format(compareDate, "yyyy/MM/dd")}`;
           }
-          return `期報 (日): ${format(date, "yyyy/MM/dd")} (05:00 - 29:00)`;
+          return `期間（日）: ${format(date, "yyyy/MM/dd")}`;
         }
-        if (periodType === "week") return `期報 (週別)`;
-        if (periodType === "month") return `期報 (月別)`;
-        return `期報 (年別)`;
+        if (periodType === "week") {
+          const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+          const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+          if (compareDate) {
+            const compareWeekStart = startOfWeek(compareDate, { weekStartsOn: 1 });
+            const compareWeekEnd = endOfWeek(compareDate, { weekStartsOn: 1 });
+            return `期間（週）: ${format(date, "yyyy")} (${format(weekStart, "dd/MM")} ～ ${format(weekEnd, "dd/MM")}) ~ ${format(compareDate, "yyyy")} (${format(compareWeekStart, "dd/MM")} ～ ${format(compareWeekEnd, "dd/MM")})`;
+          }
+          return `期間（週）: ${format(date, "yyyy")} (${format(weekStart, "dd/MM")} ～ ${format(weekEnd, "dd/MM")})`;
+        }
+        if (periodType === "month") {
+          if (compareDate) {
+            return `期間（月）: ${format(date, "yyyy/MM")} ~ ${format(compareDate, "yyyy/MM")}`;
+          }
+          return `期間（月）: ${format(date, "yyyy/MM")}`;
+        }
+        // year
+        if (compareDate) {
+          return `期間（年）: ${format(date, "yyyy")} ~ ${format(compareDate, "yyyy")}`;
+        }
+        return `期間（年）: ${format(date, "yyyy")}`;
       case "comparison":
-        return `設備比較 (${format(comparisonDate, "yyyy/MM/dd")})`;
+        switch (comparisonPeriodType) {
+          case "day":
+            return `設備比較（日）: ${format(comparisonDate, "yyyy/MM/dd")}`;
+          case "week":
+            const weekStart = startOfWeek(comparisonDate, { weekStartsOn: 1 });
+            const weekEnd = endOfWeek(comparisonDate, { weekStartsOn: 1 });
+            return `設備比較（週）: ${format(comparisonDate, "yyyy")} (${format(weekStart, "dd/MM")} ～ ${format(weekEnd, "dd/MM")})`;
+          case "month":
+            return `設備比較（月）: ${format(comparisonDate, "yyyy/MM")}`;
+          case "year":
+            return `設備比較（年）: ${format(comparisonDate, "yyyy")}`;
+        }
       case "shop":
-        if (shopDisplayType === "cost") return "コスト";
-        if (shopDisplayType === "co2") return "CO2排出量";
-        if (shopDisplayType === "cost_per_unit") return "台当たりコスト";
-        return "台当たりCO2排出量";
+        const shopTypeLabel =
+          shopDisplayType === "cost"
+            ? "コスト"
+            : shopDisplayType === "co2"
+              ? "CO2排出量"
+              : shopDisplayType === "cost_per_unit"
+                ? "台当たりコスト"
+                : "台当たりCO2排出量";
+
+        if (!shopCompareDate) {
+          switch (shopPeriodType) {
+            case "day":
+              return `${shopTypeLabel}（日）: ${format(shopDate, "yyyy/MM/dd")}`;
+            case "week":
+              const shopWeekStart = startOfWeek(shopDate, { weekStartsOn: 1 });
+              const shopWeekEnd = endOfWeek(shopDate, { weekStartsOn: 1 });
+              return `${shopTypeLabel}（週）: ${format(shopDate, "yyyy")} (${format(shopWeekStart, "dd/MM")} ～ ${format(shopWeekEnd, "dd/MM")})`;
+            case "month":
+              return `${shopTypeLabel}（月）: ${format(shopDate, "yyyy/MM")}`;
+            case "year":
+              return `${shopTypeLabel}（年）: ${format(shopDate, "yyyy")}`;
+          }
+        } else {
+          switch (shopPeriodType) {
+            case "day":
+              return `${shopTypeLabel}（日）: ${format(shopDate, "yyyy/MM/dd")} ~ ${format(shopCompareDate, "yyyy/MM/dd")}`;
+            case "week":
+              const shopWeekStart = startOfWeek(shopDate, { weekStartsOn: 1 });
+              const shopWeekEnd = endOfWeek(shopDate, { weekStartsOn: 1 });
+              const shopCompWeekStart = startOfWeek(shopCompareDate, { weekStartsOn: 1 });
+              const shopCompWeekEnd = endOfWeek(shopCompareDate, { weekStartsOn: 1 });
+              return `${shopTypeLabel}（週）: ${format(shopDate, "yyyy")} (${format(shopWeekStart, "dd/MM")} ～ ${format(shopWeekEnd, "dd/MM")}) ~ ${format(shopCompareDate, "yyyy")} (${format(shopCompWeekStart, "dd/MM")} ～ ${format(shopCompWeekEnd, "dd/MM")})`;
+            case "month":
+              return `${shopTypeLabel}（月）: ${format(shopDate, "yyyy/MM")} ~ ${format(shopCompareDate, "yyyy/MM")}`;
+            case "year":
+              return `${shopTypeLabel}（年）: ${format(shopDate, "yyyy")} ~ ${format(shopCompareDate, "yyyy")}`;
+          }
+        }
+        return shopTypeLabel;
     }
   };
 
@@ -951,8 +1080,8 @@ const Dashboard = () => {
                 {/* Spacer */}
                 <div className="flex-1" />
 
-                {/* Target Toggle - Hide on comparison tab */}
-                {tabMode !== "comparison" && (
+                {/* Target Toggle - Hide on comparison tab and hide on shop tab unless equipment is selected */}
+                {tabMode !== "comparison" && !(tabMode === "shop" && (facilityId || utilityId) && !equipmentId) && (
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="showTarget"
@@ -1050,22 +1179,47 @@ const Dashboard = () => {
                           dataKey="category1"
                           stackId="a"
                           fill="hsl(var(--chart-1))"
-                          name="カテゴリ1"
+                          name={shopCompareDate ? `カテゴリ1 (${formatShopDate(shopDate)})` : "カテゴリ1"}
                         />
                         <Bar
                           yAxisId="left"
                           dataKey="category2"
                           stackId="a"
                           fill="hsl(var(--chart-3))"
-                          name="カテゴリ2"
+                          name={shopCompareDate ? `カテゴリ2 (${formatShopDate(shopDate)})` : "カテゴリ2"}
                         />
                         <Bar
                           yAxisId="left"
                           dataKey="category3"
                           stackId="a"
                           fill="hsl(var(--chart-4))"
-                          name="カテゴリ3"
+                          name={shopCompareDate ? `カテゴリ3 (${formatShopDate(shopDate)})` : "カテゴリ3"}
                         />
+                        {shopCompareDate && (
+                          <>
+                            <Bar
+                              yAxisId="left"
+                              dataKey="category1_compare"
+                              stackId="b"
+                              fill="hsl(200 80% 50%)"
+                              name={`カテゴリ1 (${formatShopDate(shopCompareDate)})`}
+                            />
+                            <Bar
+                              yAxisId="left"
+                              dataKey="category2_compare"
+                              stackId="b"
+                              fill="hsl(280 70% 55%)"
+                              name={`カテゴリ2 (${formatShopDate(shopCompareDate)})`}
+                            />
+                            <Bar
+                              yAxisId="left"
+                              dataKey="category3_compare"
+                              stackId="b"
+                              fill="hsl(340 75% 55%)"
+                              name={`カテゴリ3 (${formatShopDate(shopCompareDate)})`}
+                            />
+                          </>
+                        )}
                         {shopDisplayType !== "cost_per_unit" && shopDisplayType !== "co2_per_unit" && (
                           <Line
                             yAxisId="right"
@@ -1077,15 +1231,7 @@ const Dashboard = () => {
                             dot={{ fill: "hsl(var(--chart-5))" }}
                           />
                         )}
-                        {showTarget && (
-                          <ReferenceLine
-                            yAxisId="left"
-                            y={150}
-                            stroke="hsl(var(--chart-2))"
-                            strokeDasharray="5 5"
-                            label="目標"
-                          />
-                        )}
+                        {/* Target line only shown for equipment (level 4) */}
                       </ComposedChart>
                     ) : (
                       // Line Chart for Equipment with dual Y-axis
@@ -1119,26 +1265,26 @@ const Dashboard = () => {
                         <Legend />
                         <Line
                           yAxisId="left"
-                          type="monotone"
+                          type="linear"
                           dataKey="value"
                           stroke="hsl(var(--chart-1))"
                           strokeWidth={2}
-                          name={shopCompareDate ? format(shopDate, "yyyy/MM/dd") : "実績"}
+                          name={shopCompareDate ? formatShopDate(shopDate) : "実績"}
                         />
                         {shopCompareDate && (
                           <Line
                             yAxisId="left"
-                            type="monotone"
+                            type="linear"
                             dataKey="compareValue"
                             stroke="hsl(var(--chart-3))"
                             strokeWidth={2}
-                            name={format(shopCompareDate, "yyyy/MM/dd")}
+                            name={formatShopDate(shopCompareDate)}
                           />
                         )}
                         {shopDisplayType !== "cost_per_unit" && shopDisplayType !== "co2_per_unit" && (
                           <Line
                             yAxisId="right"
-                            type="monotone"
+                            type="linear"
                             dataKey="productionPlan"
                             stroke="hsl(var(--chart-5))"
                             strokeWidth={2}
@@ -1194,6 +1340,14 @@ const Dashboard = () => {
                         angle={-45}
                         textAnchor="end"
                         height={60}
+                        interval={periodType === "week" && compareDate ? 23 : "preserveStartEnd"}
+                        tickFormatter={(value, index) => {
+                          if (periodType === "week" && compareDate) {
+                            // Show weekday name only at the start of each day
+                            return value;
+                          }
+                          return value;
+                        }}
                       />
                       <YAxis label={{ value: getUnitLabel(), angle: -90, position: "insideLeft" }} />
                       <Tooltip
@@ -1206,7 +1360,7 @@ const Dashboard = () => {
                       />
                       <Legend />
                       <Line
-                        type="monotone"
+                        type="linear"
                         dataKey="actual"
                         stroke="hsl(var(--chart-1))"
                         strokeWidth={2}
@@ -1214,7 +1368,7 @@ const Dashboard = () => {
                       />
                       {compareDate && (
                         <Line
-                          type="monotone"
+                          type="linear"
                           dataKey="compareActual"
                           stroke="hsl(var(--chart-3))"
                           strokeWidth={2}
@@ -1223,7 +1377,7 @@ const Dashboard = () => {
                       )}
                       {showTarget && (
                         <Line
-                          type="monotone"
+                          type="linear"
                           dataKey="target"
                           stroke="hsl(var(--chart-2))"
                           strokeWidth={2}
@@ -1344,11 +1498,13 @@ const Dashboard = () => {
                 データ詳細: {processName}（{getUnitLabel()}）
               </DialogTitle>
               <p className="text-sm text-muted-foreground">
-                {tabMode === "period" && periodType === "day"
-                  ? `期間: ${format(date, "yyyy/MM/dd")} 05:00 - 29:00`
-                  : tabMode === "period"
-                    ? `期間: ${periodType === "month" ? "月別" : periodType === "week" ? "週別" : "年別"}`
-                    : ""}
+                {tabMode === "period"
+                  ? `期間: ${periodType === "day" ? "日別" : periodType === "month" ? "月別" : periodType === "week" ? "週別" : "年別"}`
+                  : tabMode === "comparison"
+                    ? `期間: ${comparisonPeriodType === "day" ? "日別" : comparisonPeriodType === "month" ? "月別" : comparisonPeriodType === "week" ? "週別" : "年別"}`
+                    : tabMode === "shop"
+                      ? `期間: ${shopPeriodType === "day" ? "日別" : shopPeriodType === "month" ? "月別" : shopPeriodType === "week" ? "週別" : "年別"}`
+                      : ""}
               </p>
             </DialogHeader>
             <div className="py-2">
@@ -1362,17 +1518,19 @@ const Dashboard = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>日付</TableHead>
+                      <TableHead>{periodType === "week" ? "曜日" : "日付"}</TableHead>
                       <TableHead>時間</TableHead>
                       <TableHead className="text-right">
                         {processName}
                         <br />
                         <span className="text-xs text-muted-foreground">
-                          {periodType === "year"
-                            ? format(date, "yyyy年")
-                            : periodType === "month"
-                              ? format(date, "yyyy/MM")
-                              : format(date, "yyyy/MM/dd")}
+                          {periodType === "day"
+                            ? format(date, "yyyy/MM/dd")
+                            : periodType === "week"
+                              ? `${format(date, "yyyy")}/${getWeek(date)}週`
+                              : periodType === "year"
+                                ? format(date, "yyyy")
+                                : format(date, "yyyy/MM")}
                         </span>
                       </TableHead>
                       {compareDate && (
@@ -1380,11 +1538,13 @@ const Dashboard = () => {
                           {processName}
                           <br />
                           <span className="text-xs text-muted-foreground">
-                            {periodType === "year"
-                              ? format(compareDate, "yyyy年")
-                              : periodType === "month"
-                                ? format(compareDate, "yyyy/MM")
-                                : format(compareDate, "yyyy/MM/dd")}
+                            {periodType === "day"
+                              ? format(compareDate, "yyyy/MM/dd")
+                              : periodType === "week"
+                                ? `${format(compareDate, "yyyy")}/${getWeek(compareDate)}週`
+                                : periodType === "year"
+                                  ? format(compareDate, "yyyy")
+                                  : format(compareDate, "yyyy/MM")}
                           </span>
                         </TableHead>
                       )}
@@ -1392,31 +1552,37 @@ const Dashboard = () => {
                   </TableHeader>
                   <TableBody>
                     {energyData.map((item, index) => {
-                      // Extract day and hour from data
+                      // Extract day and hour from data based on periodType
                       let dayDisplay = "";
                       let hourDisplay = "";
 
                       if (periodType === "day") {
-                        // For day view: time is "05:00", "06:00", etc.
-                        dayDisplay = `${date.getDate()}日`;
+                        // For day view: show "-" for date column, time as "05:00", "06:00", etc.
+                        dayDisplay = "-";
                         hourDisplay = item.time;
                       } else if (periodType === "week") {
-                        // For week view: time is "MM/dd HH:00"
+                        // For week view: show day of week in Japanese, time as "00:00"
+                        const dayOfWeekMap = ["日", "月", "火", "水", "木", "金", "土"];
+                        // item.time format is "MM/dd HH:00"
                         const parts = item.time.split(" ");
                         if (parts.length === 2) {
                           const datePart = parts[0].split("/");
-                          dayDisplay = `${parseInt(datePart[1])}日`;
+                          const month = parseInt(datePart[0]);
+                          const day = parseInt(datePart[1]);
+                          // Create a date object to get day of week
+                          const itemDate = new Date(date.getFullYear(), month - 1, day);
+                          dayDisplay = dayOfWeekMap[itemDate.getDay()];
                           hourDisplay = parts[1];
                         } else {
                           dayDisplay = item.time;
-                          hourDisplay = "-";
+                          hourDisplay = "00:00";
                         }
                       } else if (periodType === "month") {
-                        // For month view: time is "1", "2", etc.
+                        // For month view: show "1日", "2日", etc. for date, "-" for time
                         dayDisplay = `${item.time}日`;
                         hourDisplay = "-";
                       } else {
-                        // For year view: time is "1月", "2月", etc.
+                        // For year view: show "1月", "2月", etc. for date, "-" for time
                         dayDisplay = item.time;
                         hourDisplay = "-";
                       }
@@ -1440,7 +1606,16 @@ const Dashboard = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>日時</TableHead>
+                      {comparisonPeriodType === "week" ? (
+                        <>
+                          <TableHead>曜日</TableHead>
+                          <TableHead>時間</TableHead>
+                        </>
+                      ) : comparisonPeriodType === "day" ? (
+                        <TableHead>時間</TableHead>
+                      ) : (
+                        <TableHead>日付</TableHead>
+                      )}
                       {availableEquipment.map((eq) => (
                         <TableHead key={eq.id} className="text-right">
                           {eq.name}
@@ -1449,23 +1624,60 @@ const Dashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {comparisonTableData.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{item.datetime}</TableCell>
-                        {availableEquipment.map((eq) => (
-                          <TableCell key={eq.id} className="text-right">
-                            {item[eq.name] !== undefined ? Math.round(item[eq.name]).toLocaleString() : "-"}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
+                    {comparisonTableData.map((item, index) => {
+                      // Parse datetime and format based on period type
+                      const dayOfWeekMap = ["日", "月", "火", "水", "木", "金", "土"];
+                      let displayCells: React.ReactNode[] = [];
+
+                      if (comparisonPeriodType === "day") {
+                        // Format: 2025/12/25 05:00
+                        const parts = item.datetime.split(" ");
+                        const datePart = parts[0].replace(/-/g, "/");
+                        const timePart = parts[1] || "00:00";
+                        displayCells = [<TableCell key="time">{`${datePart} ${timePart}`}</TableCell>];
+                      } else if (comparisonPeriodType === "week") {
+                        // Format: 曜日, 時間
+                        const parts = item.datetime.split(" ");
+                        const dateStr = parts[0];
+                        const timePart = parts[1] || "00:00";
+                        const itemDate = new Date(dateStr);
+                        const dayOfWeek = dayOfWeekMap[itemDate.getDay()];
+                        displayCells = [
+                          <TableCell key="day">{dayOfWeek}</TableCell>,
+                          <TableCell key="time">{timePart}</TableCell>,
+                        ];
+                      } else if (comparisonPeriodType === "month") {
+                        // Format: 1日
+                        const parts = item.datetime.split(" ");
+                        const dateStr = parts[0];
+                        const day = parseInt(dateStr.split("-")[2]);
+                        displayCells = [<TableCell key="date">{`${day}日`}</TableCell>];
+                      } else {
+                        // year: Format: 1月
+                        const parts = item.datetime.split(" ");
+                        const dateStr = parts[0];
+                        const month = parseInt(dateStr.split("-")[1]);
+                        displayCells = [<TableCell key="date">{`${month}月`}</TableCell>];
+                      }
+
+                      return (
+                        <TableRow key={index}>
+                          {displayCells}
+                          {availableEquipment.map((eq) => (
+                            <TableCell key={eq.id} className="text-right">
+                              {item[eq.name] !== undefined ? Math.round(item[eq.name]).toLocaleString() : "-"}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               ) : tabMode === "shop" ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>日付</TableHead>
+                      <TableHead>{shopPeriodType === "week" ? "曜日" : "日付"}</TableHead>
                       <TableHead>時間</TableHead>
                       {shopChildItems.length > 0 ? (
                         <>
@@ -1473,13 +1685,7 @@ const Dashboard = () => {
                             <TableHead key={item.id} className="text-right">
                               {item.name}
                               <br />
-                              <span className="text-xs text-muted-foreground">
-                                {shopPeriodType === "year"
-                                  ? format(shopDate, "yyyy年")
-                                  : shopPeriodType === "month"
-                                    ? format(shopDate, "yyyy/MM")
-                                    : format(shopDate, "yyyy/MM/dd")}
-                              </span>
+                              <span className="text-xs text-muted-foreground">{formatShopDate(shopDate)}</span>
                             </TableHead>
                           ))}
                           {shopCompareDate &&
@@ -1487,13 +1693,7 @@ const Dashboard = () => {
                               <TableHead key={`${item.id}_compare`} className="text-right">
                                 {item.name}
                                 <br />
-                                <span className="text-xs text-muted-foreground">
-                                  {shopPeriodType === "year"
-                                    ? format(shopCompareDate, "yyyy年")
-                                    : shopPeriodType === "month"
-                                      ? format(shopCompareDate, "yyyy/MM")
-                                      : format(shopCompareDate, "yyyy/MM/dd")}
-                                </span>
+                                <span className="text-xs text-muted-foreground">{formatShopDate(shopCompareDate)}</span>
                               </TableHead>
                             ))}
                         </>
@@ -1502,25 +1702,13 @@ const Dashboard = () => {
                           <TableHead className="text-right">
                             {processName}
                             <br />
-                            <span className="text-xs text-muted-foreground">
-                              {shopPeriodType === "year"
-                                ? format(shopDate, "yyyy年")
-                                : shopPeriodType === "month"
-                                  ? format(shopDate, "yyyy/MM")
-                                  : format(shopDate, "yyyy/MM/dd")}
-                            </span>
+                            <span className="text-xs text-muted-foreground">{formatShopDate(shopDate)}</span>
                           </TableHead>
                           {shopCompareDate && (
                             <TableHead className="text-right">
                               {processName}
                               <br />
-                              <span className="text-xs text-muted-foreground">
-                                {shopPeriodType === "year"
-                                  ? format(shopCompareDate, "yyyy年")
-                                  : shopPeriodType === "month"
-                                    ? format(shopCompareDate, "yyyy/MM")
-                                    : format(shopCompareDate, "yyyy/MM/dd")}
-                              </span>
+                              <span className="text-xs text-muted-foreground">{formatShopDate(shopCompareDate)}</span>
                             </TableHead>
                           )}
                         </>
@@ -1529,30 +1717,35 @@ const Dashboard = () => {
                   </TableHeader>
                   <TableBody>
                     {shopTableData.map((item, index) => {
-                      // Extract day and hour from datetime
+                      // Extract day and hour from datetime based on shopPeriodType
+                      const dayOfWeekMap = ["日", "月", "火", "水", "木", "金", "土"];
                       let dayDisplay = "";
                       let hourDisplay = "";
 
                       if (shopPeriodType === "day") {
+                        // 日: dayDisplay = "-", hourDisplay = "05:00"
                         const parts = item.datetime.split(" ");
-                        dayDisplay = `${shopDate.getDate()}日`;
-                        hourDisplay = parts[1] || "-";
+                        dayDisplay = "-";
+                        hourDisplay = parts[1] || "00:00";
                       } else if (shopPeriodType === "week") {
+                        // 週: dayDisplay = "月" (曜日), hourDisplay = "00:00"
                         const parts = item.datetime.split(" ");
-                        const dateParts = parts[0].split("-");
-                        dayDisplay = `${parseInt(dateParts[2])}日`;
-                        hourDisplay = parts[1] || "-";
+                        const dateStr = parts[0];
+                        const itemDate = new Date(dateStr);
+                        dayDisplay = dayOfWeekMap[itemDate.getDay()];
+                        hourDisplay = parts[1] || "00:00";
                       } else if (shopPeriodType === "month") {
+                        // 月: dayDisplay = "1日", hourDisplay = "-"
                         const parts = item.datetime.split(" ");
                         const dateParts = parts[0].split("-");
                         dayDisplay = `${parseInt(dateParts[2])}日`;
-                        hourDisplay = parts[1] || "-";
+                        hourDisplay = "-";
                       } else {
-                        // year
+                        // 年: dayDisplay = "1月", hourDisplay = "-"
                         const parts = item.datetime.split(" ");
                         const dateParts = parts[0].split("-");
                         dayDisplay = `${parseInt(dateParts[1])}月`;
-                        hourDisplay = parts[1] || "-";
+                        hourDisplay = "-";
                       }
 
                       return (

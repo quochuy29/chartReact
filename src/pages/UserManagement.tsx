@@ -23,7 +23,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, CircleCheck, CircleAlert } from "lucide-react";
+import { SmartPagination } from "@/components/SmartPagination";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
@@ -224,15 +225,309 @@ const UserManagement = () => {
           role: "user",
           created_at: "2025-01-01",
         },
+        {
+          id: "HuyPQ1",
+          display_name: "HuyPQ",
+          email: "huypq@vnext.vn",
+          role: "admin",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "PhucND1",
+          display_name: "PhucND",
+          email: "phucnd@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThangNV1",
+          display_name: "ThangNV",
+          email: "thangnv@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "AnhNQ1",
+          display_name: "AnhNQ",
+          email: "anhnq@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThuyNVT1",
+          display_name: "ThuyNVT",
+          email: "thuynvt@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThinhLD1",
+          display_name: "ThinhLD",
+          email: "thinhld@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "NguyetLTA1",
+          display_name: "NguyetLTA",
+          email: "nguyetlta@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "TrinhPP1",
+          display_name: "TrinhPP",
+          email: "trinhpp@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "HueNTB1",
+          display_name: "HueNTB",
+          email: "huentb@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "HuyPQ1",
+          display_name: "HuyPQ",
+          email: "huypq@vnext.vn",
+          role: "admin",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "PhucND1",
+          display_name: "PhucND",
+          email: "phucnd@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThangNV1",
+          display_name: "ThangNV",
+          email: "thangnv@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "AnhNQ1",
+          display_name: "AnhNQ",
+          email: "anhnq@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThuyNVT1",
+          display_name: "ThuyNVT",
+          email: "thuynvt@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThinhLD1",
+          display_name: "ThinhLD",
+          email: "thinhld@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "NguyetLTA1",
+          display_name: "NguyetLTA",
+          email: "nguyetlta@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "TrinhPP1",
+          display_name: "TrinhPP",
+          email: "trinhpp@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "HueNTB1",
+          display_name: "HueNTB",
+          email: "huentb@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "HuyPQ1",
+          display_name: "HuyPQ",
+          email: "huypq@vnext.vn",
+          role: "admin",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "PhucND1",
+          display_name: "PhucND",
+          email: "phucnd@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThangNV1",
+          display_name: "ThangNV",
+          email: "thangnv@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "AnhNQ1",
+          display_name: "AnhNQ",
+          email: "anhnq@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThuyNVT1",
+          display_name: "ThuyNVT",
+          email: "thuynvt@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThinhLD1",
+          display_name: "ThinhLD",
+          email: "thinhld@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "NguyetLTA1",
+          display_name: "NguyetLTA",
+          email: "nguyetlta@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "TrinhPP1",
+          display_name: "TrinhPP",
+          email: "trinhpp@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "HueNTB1",
+          display_name: "HueNTB",
+          email: "huentb@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "HuyPQ1",
+          display_name: "HuyPQ",
+          email: "huypq@vnext.vn",
+          role: "admin",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "PhucND1",
+          display_name: "PhucND",
+          email: "phucnd@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThangNV1",
+          display_name: "ThangNV",
+          email: "thangnv@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "AnhNQ1",
+          display_name: "AnhNQ",
+          email: "anhnq@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThuyNVT1",
+          display_name: "ThuyNVT",
+          email: "thuynvt@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThinhLD1",
+          display_name: "ThinhLD",
+          email: "thinhld@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "NguyetLTA1",
+          display_name: "NguyetLTA",
+          email: "nguyetlta@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "TrinhPP1",
+          display_name: "TrinhPP",
+          email: "trinhpp@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "HueNTB1",
+          display_name: "HueNTB",
+          email: "huentb@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "ThinhLD1",
+          display_name: "ThinhLD",
+          email: "thinhld@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "NguyetLTA1",
+          display_name: "NguyetLTA",
+          email: "nguyetlta@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "TrinhPP1",
+          display_name: "TrinhPP",
+          email: "trinhpp@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
+        {
+          id: "HueNTB1",
+          display_name: "HueNTB",
+          email: "huentb@vnext.vn",
+          role: "user",
+          created_at: "2025-01-01",
+        },
       );
 
       setUsers(usersWithRoles);
     } catch (error) {
       console.error("Error loading users:", error);
+
       toast({
-        title: "エラー",
-        description: "ユーザーの読み込みに失敗しました",
-        variant: "destructive",
+        description: (
+          <div className="flex items-start gap-3">
+            {/* ICON LUCIDE */}
+            {/* fill-red-500: Tô màu đỏ bên trong hình tròn */}
+            {/* text-white: Tô màu trắng cho dấu chấm than (nét vẽ) */}
+            <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-white fill-red-500" />
+
+            <div className="grid gap-1">
+              <h4 className="font-semibold text-red-900">エラー</h4>
+              <p className="whitespace-pre-line text-sm text-red-600">
+                システムエラーが発生しました。しばらくしてから再度お試しください。（エラーコード：500）
+              </p>
+            </div>
+          </div>
+        ),
+        duration: 5000,
       });
     } finally {
       setLoading(false);
@@ -263,6 +558,30 @@ const UserManagement = () => {
 
     if (Object.keys(errors).length > 0) {
       setAddFormErrors(errors);
+      const errorList = Object.values(errors);
+
+      toast({
+        description: (
+          <div className="flex items-start gap-3">
+            {/* Icon cảnh báo đỏ (Lucide) */}
+            <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-white fill-red-500" />
+
+            <div className="grid gap-1">
+              <h4 className="font-semibold text-red-900">エラー</h4>
+
+              {/* 2. Hiển thị danh sách lỗi với dấu chấm tròn */}
+              <ul className="list-disc pl-4 space-y-1">
+                {errorList.map((msg, index) => (
+                  <li key={index} className="text-sm text-red-600">
+                    {msg}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ),
+        duration: 5000,
+      });
       return false;
     }
 
@@ -281,6 +600,35 @@ const UserManagement = () => {
         }
       });
       setEditFormErrors(errors);
+      if (Object.keys(errors).length > 0) {
+        setEditFormErrors(errors);
+
+        // Lấy danh sách thông báo lỗi thành mảng để map vào thẻ <li>
+        const errorList = Object.values(errors);
+
+        toast({
+          description: (
+            <div className="flex items-start gap-3">
+              {/* Icon lỗi: Nền đỏ, dấu than trắng */}
+              <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-white fill-red-500" />
+
+              <div className="grid gap-1">
+                <h4 className="font-semibold text-red-900">エラー</h4>
+
+                {/* Danh sách lỗi với dấu chấm tròn */}
+                <ul className="list-disc pl-4 space-y-1">
+                  {errorList.map((msg, index) => (
+                    <li key={index} className="text-sm text-red-600">
+                      {msg}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ),
+          duration: 5000,
+        });
+      }
       return false;
     }
     setEditFormErrors({});
@@ -295,16 +643,41 @@ const UserManagement = () => {
       // For now, we'll just add a role for an existing user
       toast({
         title: "情報",
-        description: "新規ユーザーの追加は管理者権限が必要です。Supabase管理画面から追加してください。",
+        description: "ユーザーの追加に失敗しました",
+      });
+      toast({
+        description: (
+          <div className="flex items-center gap-3">
+            {/* Icon Tick xanh nền đặc */}
+            <CircleCheck className="h-5 w-5 shrink-0 text-white fill-green-500" />
+
+            {/* Nội dung thông báo */}
+            <span className="font-semibold text-gray-900">ユーザーの削除に成功しました</span>
+          </div>
+        ),
+        duration: 3000, // Success thường để ngắn hơn Error
       });
       setIsAddDialogOpen(false);
       resetAddForm();
     } catch (error) {
       console.error("Error adding user:", error);
       toast({
-        title: "エラー",
-        description: "ユーザーの追加に失敗しました",
-        variant: "destructive",
+        description: (
+          <div className="flex items-start gap-3">
+            {/* ICON LUCIDE */}
+            {/* fill-red-500: Tô màu đỏ bên trong hình tròn */}
+            {/* text-white: Tô màu trắng cho dấu chấm than (nét vẽ) */}
+            <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-white fill-red-500" />
+
+            <div className="grid gap-1">
+              <h4 className="font-semibold text-red-900">エラー</h4>
+              <p className="whitespace-pre-line text-sm text-red-600">
+                システムエラーが発生しました。しばらくしてから再度お試しください。（エラーコード：500）
+              </p>
+            </div>
+          </div>
+        ),
+        duration: 5000,
       });
     }
   };
@@ -376,8 +749,16 @@ const UserManagement = () => {
       }
 
       toast({
-        title: "成功",
-        description: "ユーザー情報を更新しました",
+        description: (
+          <div className="flex items-center gap-3">
+            {/* Icon Tick xanh nền đặc */}
+            <CircleCheck className="h-5 w-5 shrink-0 text-white fill-green-500" />
+
+            {/* Nội dung thông báo */}
+            <span className="font-semibold text-gray-900">ユーザーの更新に成功しました</span>
+          </div>
+        ),
+        duration: 3000, // Success thường để ngắn hơn Error
       });
 
       setIsEditDialogOpen(false);
@@ -386,9 +767,22 @@ const UserManagement = () => {
     } catch (error) {
       console.error("Error updating user:", error);
       toast({
-        title: "エラー",
-        description: "ユーザーの更新に失敗しました",
-        variant: "destructive",
+        description: (
+          <div className="flex items-start gap-3">
+            {/* ICON LUCIDE */}
+            {/* fill-red-500: Tô màu đỏ bên trong hình tròn */}
+            {/* text-white: Tô màu trắng cho dấu chấm than (nét vẽ) */}
+            <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-white fill-red-500" />
+
+            <div className="grid gap-1">
+              <h4 className="font-semibold text-red-900">エラー</h4>
+              <p className="whitespace-pre-line text-sm text-red-600">
+                システムエラーが発生しました。しばらくしてから再度お試しください。（エラーコード：500）
+              </p>
+            </div>
+          </div>
+        ),
+        duration: 5000,
       });
     }
   };
@@ -403,8 +797,16 @@ const UserManagement = () => {
       if (roleError) throw roleError;
 
       toast({
-        title: "成功",
-        description: "ユーザーの役割を削除しました",
+        description: (
+          <div className="flex items-center gap-3">
+            {/* Icon Tick xanh nền đặc */}
+            <CircleCheck className="h-5 w-5 shrink-0 text-white fill-green-500" />
+
+            {/* Nội dung thông báo */}
+            <span className="font-semibold text-gray-900">ユーザーの削除に成功しました</span>
+          </div>
+        ),
+        duration: 3000, // Success thường để ngắn hơn Error
       });
 
       setIsDeleteDialogOpen(false);
@@ -412,9 +814,22 @@ const UserManagement = () => {
     } catch (error) {
       console.error("Error deleting user:", error);
       toast({
-        title: "エラー",
-        description: "削除に失敗しました",
-        variant: "destructive",
+        description: (
+          <div className="flex items-start gap-3">
+            {/* ICON LUCIDE */}
+            {/* fill-red-500: Tô màu đỏ bên trong hình tròn */}
+            {/* text-white: Tô màu trắng cho dấu chấm than (nét vẽ) */}
+            <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-white fill-red-500" />
+
+            <div className="grid gap-1">
+              <h4 className="font-semibold text-red-900">エラー</h4>
+              <p className="whitespace-pre-line text-sm text-red-600">
+                システムエラーが発生しました。しばらくしてから再度お試しください。（エラーコード：500）
+              </p>
+            </div>
+          </div>
+        ),
+        duration: 5000,
       });
     }
   };
@@ -458,7 +873,7 @@ const UserManagement = () => {
               <TableRow>
                 <TableHead className="w-[100px]">ユーザーID</TableHead>
                 <TableHead>表示名</TableHead>
-                <TableHead>メール</TableHead>
+                <TableHead>メールアドレス</TableHead>
                 <TableHead>役割</TableHead>
                 <TableHead>作成日</TableHead>
                 <TableHead className="w-[100px]">操作</TableHead>
@@ -520,29 +935,7 @@ const UserManagement = () => {
             <div className="text-sm text-muted-foreground">
               {startIndex + 1} - {Math.min(endIndex, users.length)} / {users.length} 件
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                前へ
-              </Button>
-              <div className="text-sm">
-                {currentPage} / {totalPages}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-              >
-                次へ
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <SmartPagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         )}
       </div>
@@ -572,7 +965,6 @@ const UserManagement = () => {
                 className={addFormErrors.user_id ? "border-red-500" : ""}
                 placeholder="半角英数字のみ (3-50文字)"
               />
-              {addFormErrors.user_id && <p className="text-xs text-red-500">{addFormErrors.user_id}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="display_name">
@@ -584,7 +976,6 @@ const UserManagement = () => {
                 onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
                 className={addFormErrors.display_name ? "border-red-500" : ""}
               />
-              {addFormErrors.display_name && <p className="text-xs text-red-500">{addFormErrors.display_name}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">
@@ -597,7 +988,6 @@ const UserManagement = () => {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className={addFormErrors.email ? "border-red-500" : ""}
               />
-              {addFormErrors.email && <p className="text-xs text-red-500">{addFormErrors.email}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">
@@ -610,7 +1000,6 @@ const UserManagement = () => {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className={addFormErrors.password ? "border-red-500" : ""}
               />
-              {addFormErrors.password && <p className="text-xs text-red-500">{addFormErrors.password}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password_confirm">
@@ -623,9 +1012,6 @@ const UserManagement = () => {
                 onChange={(e) => setFormData({ ...formData, password_confirm: e.target.value })}
                 className={addFormErrors.password_confirm ? "border-red-500" : ""}
               />
-              {addFormErrors.password_confirm && (
-                <p className="text-xs text-red-500">{addFormErrors.password_confirm}</p>
-              )}
             </div>
             <div className="space-y-2">
               <Label>
@@ -655,7 +1041,6 @@ const UserManagement = () => {
                   </Label>
                 </div>
               </RadioGroup>
-              {addFormErrors.role && <p className="text-xs text-red-500">{addFormErrors.role}</p>}
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -714,7 +1099,6 @@ const UserManagement = () => {
                 onChange={(e) => setEditFormData({ ...editFormData, display_name: e.target.value })}
                 className={editFormErrors.display_name ? "border-red-500" : ""}
               />
-              {editFormErrors.display_name && <p className="text-xs text-red-500">{editFormErrors.display_name}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit_email">
@@ -727,7 +1111,6 @@ const UserManagement = () => {
                 onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                 className={editFormErrors.email ? "border-red-500" : ""}
               />
-              {editFormErrors.email && <p className="text-xs text-red-500">{editFormErrors.email}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit_password">パスワード</Label>
@@ -739,7 +1122,6 @@ const UserManagement = () => {
                 placeholder="変更する場合のみ入力"
                 className={editFormErrors.password ? "border-red-500" : ""}
               />
-              {editFormErrors.password && <p className="text-xs text-red-500">{editFormErrors.password}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit_password_confirm">パスワードを確認</Label>
@@ -751,9 +1133,6 @@ const UserManagement = () => {
                 placeholder="変更する場合のみ入力"
                 className={editFormErrors.password_confirm ? "border-red-500" : ""}
               />
-              {editFormErrors.password_confirm && (
-                <p className="text-xs text-red-500">{editFormErrors.password_confirm}</p>
-              )}
             </div>
             <div className="space-y-2">
               <Label>
@@ -783,7 +1162,6 @@ const UserManagement = () => {
                   </Label>
                 </div>
               </RadioGroup>
-              {editFormErrors.role && <p className="text-xs text-red-500">{editFormErrors.role}</p>}
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -820,9 +1198,7 @@ const UserManagement = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>削除の確認</AlertDialogTitle>
-            <AlertDialogDescription>
-              このユーザーを削除してもよろしいですか？この操作は取り消せません。
-            </AlertDialogDescription>
+            <AlertDialogDescription>このユーザーを削除してもよろしいですか？</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>

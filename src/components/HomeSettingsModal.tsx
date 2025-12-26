@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -39,7 +39,7 @@ interface HomeSettingsModalProps {
   onSaved: () => void;
 }
 
-const GRAPH_TYPES = ["使用量推移", "コスト/CO₂", "CO₂排出量", "台当たりコスト", "台当たりCO₂排出量"];
+const GRAPH_TYPES = ["使用量推移", "コスト", "CO₂排出量", "台当たりコスト", "台当たりCO₂排出量"];
 
 const GRAPH_COUNT = 4;
 
@@ -148,7 +148,7 @@ export function HomeSettingsModal({ open, onOpenChange, onSaved }: HomeSettingsM
   const loadSettings = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from("m_settings").select("*").eq("setting_type", 1).single();
+      const { data, error } = await supabase.from("m_settings").select("*").eq("setting_type", "graph_home").single();
 
       if (error && error.code !== "PGRST116") {
         console.error("Error loading settings:", error);
@@ -246,7 +246,11 @@ export function HomeSettingsModal({ open, onOpenChange, onSaved }: HomeSettingsM
       const settingValue = { graphs: graphsToSave };
 
       // Check if record exists
-      const { data: existing } = await supabase.from("m_settings").select("id").eq("setting_type", 1).single();
+      const { data: existing } = await supabase
+        .from("m_settings")
+        .select("id")
+        .eq("setting_type", "graph_home")
+        .single();
 
       if (existing) {
         // Update existing record
@@ -263,7 +267,7 @@ export function HomeSettingsModal({ open, onOpenChange, onSaved }: HomeSettingsM
         // Insert new record
         const { error } = await supabase.from("m_settings").insert([
           {
-            setting_type: 1,
+            setting_type: "graph_home",
             setting_value: JSON.parse(JSON.stringify(settingValue)),
           },
         ]);
